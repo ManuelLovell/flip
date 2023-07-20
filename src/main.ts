@@ -4,7 +4,9 @@ import { Constants } from './constants';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
-    Muffins
+    You found my secret space.  There's nothing to do here.
+    This extension basically is updated from one person - the GM's side. No reason for everyone to update, right?
+    Otherwise you flip the button. So.. go away.
   </div>
 `
 
@@ -60,29 +62,26 @@ OBR.onReady(async () =>
         },
     });
 
-
     async function SetupFlip(): Promise<void>
     {
-        await OBR.scene.items.onChange(async (items) =>
+        await OBR.scene.items.onChange(async (itemsChanged) =>
         {
-            const updateTheseItems = [];
-            const iItems = items as Image[];
-            for (let item of iItems)
+            await OBR.scene.items.updateItems(itemsChanged, (items) =>
             {
-                if (item.type !== "IMAGE") continue;
-
-                const anchor = (item.position.y * 1000) + (item.image.height / 6);
-                if ((item.type === "IMAGE"
-                    && item.zIndex !== anchor
-                    && item.metadata[`${Constants.EXTENSIONID}/metadata_flip`] !== undefined)
-                    || item.metadata[`${Constants.EXTENSIONID}/metadata_flip`] === undefined)
+                for (let item of items)
                 {
-                    item.metadata[`${Constants.EXTENSIONID}/metadata_flip`] = { anchor };
-                    item.zIndex = anchor;
-                    updateTheseItems.push(item);
+                    if (item.type !== "IMAGE") continue;
+
+                    const anchor = (item.position.y * 1000) + (item.image.height / 6);
+                    if ((item.zIndex !== anchor
+                        && item.metadata[`${Constants.EXTENSIONID}/metadata_flip`] !== undefined)
+                        || item.metadata[`${Constants.EXTENSIONID}/metadata_flip`] === undefined)
+                    {
+                        item.metadata[`${Constants.EXTENSIONID}/metadata_flip`] = { anchor };
+                        item.zIndex = anchor;
+                    }
                 }
-                await OBR.scene.items.addItems(updateTheseItems); // Change to an update later
-            }
+            });
         });
 
         await OBR.scene.items.updateItems(
