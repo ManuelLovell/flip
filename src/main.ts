@@ -41,7 +41,7 @@ OBR.onReady(async () =>
         id: `${ID}/context-menu`,
         icons: [
             {
-                icon: "/icon.svg",
+                icon: "/flip.svg",
                 label: "Flip It",
                 filter: {
                     every: [
