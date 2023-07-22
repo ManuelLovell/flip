@@ -100,6 +100,7 @@ OBR.onReady(async () =>
                         item.position.x = 1;
                         item.position.y = 1;
                         item.disableHit = true;
+                        item.locked = true;
                         showThese.push(mirrored);
                     }
                 });
@@ -118,6 +119,7 @@ OBR.onReady(async () =>
                                 item.position.x = mirrorMatch.x;
                                 item.position.y = mirrorMatch.y;
                                 item.disableHit = false;
+                                item.locked = false;
                             }
                         }
                     });
@@ -187,6 +189,7 @@ OBR.onReady(async () =>
                             itemed.position.x = mirrored.x! + (item.image.width / 2);
                             itemed.position.y = mirrored.y! + (item.image.height / 4);
                             itemed.disableHit = false;
+                            itemed.locked = false;
                             itemed.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
                         }
                     });
@@ -217,6 +220,7 @@ OBR.onReady(async () =>
                             items[1].position.x = 1;
                             items[1].position.y = 1;
                             items[1].disableHit = true;
+                            items[1].locked = true;
                         }
                     }
                     number++;
@@ -246,6 +250,30 @@ OBR.onReady(async () =>
                     }
                 }
             });
+
+            // Check that everyone has a buddy (see if the visible of the pair was deleted)
+            const tobeDeleted: string[] = [];
+            for (let item of itemsChanged)
+            {
+                if (item.type !== "IMAGE") continue;
+
+                const imItem = item as Image;
+                if (imItem.image.height === 1 && imItem.image.width === 1
+                    && imItem.metadata[`${Constants.EXTENSIONID}/metadata_bind`] !== undefined)
+                {
+                    const meta = imItem.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as any;
+                    const mirrorMeta = meta.mirror as Mirror;
+
+                    if (!mirrorMeta.id) continue;
+
+                    const mirrorPair = await OBR.scene.items.getItems([mirrorMeta.id]);
+                    if (mirrorPair.length == 0)
+                    {
+                        tobeDeleted.push(imItem.id);
+                    }
+                }
+            }
+            await OBR.scene.items.deleteItems(tobeDeleted);
         });
 
         await OBR.scene.items.updateItems(
