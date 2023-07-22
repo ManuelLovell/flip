@@ -1,6 +1,6 @@
 {
     "name": "Flip!",
-    "description": "Arranges token depth based on height and allows for easy flipping.",
+    "description": "Arranges token depth based on height. Also bind two tokens and allows for easy flipping.",
     "version": "1.0.0",
     "author": "Battle-System",
     "icon": "/logo.png",
