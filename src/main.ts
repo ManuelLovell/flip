@@ -12,7 +12,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `
 ///Scrolling News
 const textArray = [
-    "Flip! v1.1",
+    "Flip! v1.1.1",
     "Added Disable for Z-Ordering",
     "Added Disable for Binding"];
 
@@ -20,6 +20,7 @@ let currentIndex = 0;
 let bindingDisabled = false;
 const textContainer = document.getElementById("bannerText")!;
 const zCheckbox = document.getElementById("disableZOrder")! as HTMLInputElement;
+zCheckbox.checked = true;
 const bindCheckbox = document.getElementById("disableBinding")! as HTMLInputElement;
 
 function fadeOut()
