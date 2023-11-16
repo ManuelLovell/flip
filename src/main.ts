@@ -12,7 +12,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `
 ///Scrolling News
 const textArray = [
-    "Flip! v1.1.1",
+    "Flip! v1.1.2",
+    "Can now Bind Maps and more!",
     "Added Disable for Z-Ordering",
     "Added Disable for Binding"];
 
@@ -130,12 +131,8 @@ OBR.onReady(async () =>
                     every: [
                         // This is for Bound characters, it swaps to their other side
                         { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "MAP", operator: "!=", coordinator: "&&" },
+                        { key: "image", value: undefined, operator: "!=", coordinator: "&&" },
                         { key: "layer", value: "GRID", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "DRAWING", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "ATTACHMENT", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "NOTE", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "TEXT", operator: "!=", coordinator: "&&" },
                         { key: "layer", value: "RULER", operator: "!=", coordinator: "&&" },
                         { key: "layer", value: "FOG", operator: "!=", coordinator: "&&" },
                         { key: "layer", value: "POINTER", operator: "!=", coordinator: "&&" },
@@ -232,12 +229,8 @@ OBR.onReady(async () =>
                         every: [
                             // Only work on a pair at a time, with no bind metadata
                             { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, coordinator: "&&" },
-                            { key: "layer", value: "MAP", operator: "!=", coordinator: "&&" },
+                            { key: "image", value: undefined, operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "GRID", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "DRAWING", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "ATTACHMENT", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "NOTE", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "TEXT", operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "RULER", operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "FOG", operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "POINTER", operator: "!=", coordinator: "&&" },
@@ -254,12 +247,8 @@ OBR.onReady(async () =>
                         every: [
                             // Only unbind a set at a time, who has bind metadata
                             { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "MAP", operator: "!=", coordinator: "&&" },
+                            { key: "image", value: undefined, operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "GRID", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "DRAWING", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "ATTACHMENT", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "NOTE", operator: "!=", coordinator: "&&" },
-                            { key: "layer", value: "TEXT", operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "RULER", operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "FOG", operator: "!=", coordinator: "&&" },
                             { key: "layer", value: "POINTER", operator: "!=", coordinator: "&&" },
@@ -313,6 +302,14 @@ OBR.onReady(async () =>
                 }
                 else
                 {
+                    const sameType = context.items.every(x=> x.layer === context.items[0].layer);
+
+                    if (!sameType)
+                    {
+                        await OBR.notification.show("Bound items must be from the same Layer.", "WARNING");
+                        return;
+                    }
+
                     // If it's not a single, we're binding
                     await OBR.scene.items.updateItems(context.items, (items) =>
                     {
