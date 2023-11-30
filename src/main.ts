@@ -12,10 +12,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `
 ///Scrolling News
 const textArray = [
-    "Flip! v1.1.2",
     "Can now Bind Maps and more!",
-    "Added Disable for Z-Ordering",
-    "Added Disable for Binding"];
+    "Flip! v1.1.3",
+    "Fixed Bug with Names Showing",];
 
 let currentIndex = 0;
 let bindingDisabled = false;
@@ -106,6 +105,11 @@ OBR.onReady(async () =>
             {
                 icon: "/flip.svg",
                 label: "Flip It",
+                filter: {
+                    every: [
+                        { key: "image", value: undefined, operator: "!=" },
+                    ],
+                }
             }
         ],
         async onClick(context, _: string)
@@ -148,7 +152,7 @@ OBR.onReady(async () =>
             const showThese: Mirror[] = [];
 
             // Deselect so we don't see the selection halo
-            //await OBR.player.deselect(context.items.map(item => item.id)); - BROKEN
+            await OBR.player.deselect(context.items.map(item => item.id));
 
             // Hide the one we're selected on
             await OBR.scene.items.updateItems(context.items, (items) =>
@@ -163,9 +167,14 @@ OBR.onReady(async () =>
                         height: metaMirrored.height,
                         width: metaMirrored.width,
                         x: item.position.x,
-                        y: item.position.y
+                        y: item.position.y,
+                        name: metaMirrored.name
                     };
 
+                    if (item.text?.plainText)
+                    {
+                        item.text.plainText = "";
+                    }
                     item.image.height = 1;
                     item.image.width = 1;
                     item.position.x = 1;
@@ -185,6 +194,10 @@ OBR.onReady(async () =>
                         const mirrorMatch = showThese.find((show) => show.id === item.id);
                         if (mirrorMatch)
                         {
+                            if (mirrorMatch.name)
+                            {
+                                item.text.plainText = mirrorMatch.name;
+                            }
                             item.image.height = mirrorMatch.height;
                             item.image.width = mirrorMatch.width;
                             item.position.x = mirrorMatch.x;
@@ -200,17 +213,20 @@ OBR.onReady(async () =>
 
             //Find attachments
             const attachedItems = await OBR.scene.items.getItems((item) => context.items.some(x => x.id === item.attachedTo));
-            await OBR.scene.items.updateItems(attachedItems,
-                (attachedments) =>
-                {
-                    // Find the old item it was attached to, swap to Id in the mirror data
-                    for (let attachee of attachedments)
+            if (attachedItems?.length > 0) 
+            {
+                await OBR.scene.items.updateItems(attachedItems,
+                    (attachedments) =>
                     {
-                        const oldParentMeta = context.items.find((item) => item.id === attachee.attachedTo)!.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as Metadata;
-                        const oldParentMirror = oldParentMeta.mirror as Mirror;
-                        attachee.attachedTo = oldParentMirror.id;
-                    }
-                });
+                        // Find the old item it was attached to, swap to Id in the mirror data
+                        for (let attachee of attachedments)
+                        {
+                            const oldParentMeta = context.items.find((item) => item.id === attachee.attachedTo)!.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as Metadata;
+                            const oldParentMirror = oldParentMeta.mirror as Mirror;
+                            attachee.attachedTo = oldParentMirror.id;
+                        }
+                    });
+            }
         }
     });
 
@@ -302,7 +318,7 @@ OBR.onReady(async () =>
                 }
                 else
                 {
-                    const sameType = context.items.every(x=> x.layer === context.items[0].layer);
+                    const sameType = context.items.every(x => x.layer === context.items[0].layer);
 
                     if (!sameType)
                     {
@@ -310,25 +326,29 @@ OBR.onReady(async () =>
                         return;
                     }
 
+                    /// Create copies of the items so we don't reference values
+                    const first = { ...context.items[0] } as Image;
+                    const second = { ...context.items[1] } as Image;
+                    // Take a mirror of the ID, height and width so we can zero out the mirrored
+
                     // If it's not a single, we're binding
                     await OBR.scene.items.updateItems(context.items, (items) =>
                     {
-                        /// Create copies of the items so we don't reference values
-                        const first = { ...items[0] };
-                        const second = { ...items[1] };
-
                         for (let index = 0; index < items.length; index++)
                         {
-                            // Take a mirror of the ID, height and width so we can zero out the mirrored
                             const mirror: Mirror = index === 0 ?
-                                { id: second.id, height: second.image.height, width: second.image.width }
-                                : { id: first.id, height: first.image.height, width: first.image.width };
+                                { id: second.id, height: second.image.height, width: second.image.width, name: second.text?.plainText }
+                                : { id: first.id, height: first.image.height, width: first.image.width, name: first.text?.plainText };
 
                             items[index].metadata[`${Constants.EXTENSIONID}/metadata_bind`] = { mirror };
 
                             // Update the mirror to be hidden
                             if (index === 1)
                             {
+                                if (items[1].text?.plainText)
+                                {
+                                    items[1].text.plainText = "";
+                                }
                                 items[1].image.height = 1;
                                 items[1].image.width = 1;
                                 items[1].position.x = 1;
@@ -448,5 +468,6 @@ interface Mirror
     height: number;
     width: number;
     x?: number,
-    y?: number
+    y?: number,
+    name?: string;
 }
