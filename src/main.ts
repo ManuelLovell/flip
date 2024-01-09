@@ -49,6 +49,8 @@ OBR.onReady(async () =>
 {
     // Set theme accordingly
     const theme = await OBR.theme.getTheme();
+    const roomData = await OBR.room.getMetadata();
+
     Utilities.SetThemeMode(theme, document);
     OBR.theme.onChange((theme) =>
     {
@@ -59,6 +61,8 @@ OBR.onReady(async () =>
     // Do all setup through the GM role so we don't have multiple updates
     if (role == "GM")
     {
+        bindCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableBinding`] == true ? true : false;
+        zCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableZIndex`] == true ? true : false;
         const sceneIsReady = await OBR.scene.isReady();
         if (sceneIsReady)
         {
