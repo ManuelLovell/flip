@@ -1,27 +1,31 @@
-import OBR, { Image, Metadata } from '@owlbear-rodeo/sdk'
+import OBR, { Image, Item } from '@owlbear-rodeo/sdk'
 import { Constants } from './constants';
 import * as Utilities from './utilities';
 import './style.css'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
-    <div id="bannerText"></div>
+    <div style="display:flex;"><div id="bannerText"></div><div id="whatsNew"></div></div>
     <h4>Disable Z-Ordering:<input type="checkbox" id="disableZOrder"></h4>
     <h4>Disable Binding for Players:<input type="checkbox" id="disableBinding"></h4>
+    <h4>Keep Attachments with Parent:<input type="checkbox" id="keepAttachments"></h4>
   </div>
 `
 ///Scrolling News
 const textArray = [
-    "Can now Bind Maps and more!",
-    "Flip! v1.1.3",
-    "Fixed Bug with Names Showing",];
+    "Fixed Bug with Names Showing",
+    "Flip! v1.2",
+    "New Attachment Permission",];
 
 let currentIndex = 0;
 let bindingDisabled = false;
 const textContainer = document.getElementById("bannerText")!;
 const zCheckbox = document.getElementById("disableZOrder")! as HTMLInputElement;
-zCheckbox.checked = true;
 const bindCheckbox = document.getElementById("disableBinding")! as HTMLInputElement;
+const attachmentCheckbox = document.getElementById("keepAttachments")! as HTMLInputElement;
+
+const whatsNewContainer = document.getElementById("whatsNew")!;
+whatsNewContainer.appendChild(Utilities.GetWhatsNewButton());
 
 function fadeOut()
 {
@@ -63,6 +67,7 @@ OBR.onReady(async () =>
     {
         bindCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableBinding`] == true ? true : false;
         zCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableZIndex`] == true ? true : false;
+        attachmentCheckbox.checked = roomData[`${Constants.EXTENSIONID}/attachmentParent`] == true ? true : false;
         const sceneIsReady = await OBR.scene.isReady();
         if (sceneIsReady)
         {
@@ -153,84 +158,94 @@ OBR.onReady(async () =>
         async onClick(context, _: string)
         {
             // Find bound floppies, grab the metadata of this one to find it's Mirror
-            const showThese: Mirror[] = [];
+            let showThese: Item[] = [];
+            let hideThese: Item[] = [];
+            let updateThese: Image[] = [];
 
             // Deselect so we don't see the selection halo
             await OBR.player.deselect(context.items.map(item => item.id));
+            const attached = await OBR.scene.items.getItemAttachments(context.items.map(x => x.id));
+            const attachedItems = attached.filter(item => !context.items.find(x => x.id == item.id));
 
-            // Hide the one we're selected on
-            await OBR.scene.items.updateItems(context.items, (items) =>
+            // Get the mirrored items data and clean it up
+            for (let cItem of context.items)
             {
-                for (let item of items)
+                const item = cItem as Image;
+                const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as Item;
+
+                if (attachmentCheckbox.checked)
                 {
-                    const metadata: Metadata = item.metadata[`${Constants.EXTENSIONID}/metadata_bind`];
-                    const metaMirrored = metadata.mirror as Mirror;
-
-                    let mirrored: Mirror = {
-                        id: metaMirrored.id,
-                        height: metaMirrored.height,
-                        width: metaMirrored.width,
-                        x: item.position.x,
-                        y: item.position.y,
-                        name: metaMirrored.name
-                    };
-
-                    if (item.text?.plainText)
+                    // Remove
+                    const attachments = (await OBR.scene.items.getItemAttachments([cItem.id]))?.filter(x => x.id !== cItem.id);
+                    if (attachments?.length > 0)
                     {
-                        item.text.plainText = "";
+                        cItem.metadata[`${Constants.EXTENSIONID}/metadata_bind_attachments`] = JSON.stringify(attachments);
+                        hideThese = hideThese.concat(attachments);
                     }
-                    item.image.height = 1;
-                    item.image.width = 1;
-                    item.position.x = 1;
-                    item.position.y = 1;
-                    item.disableHit = true;
-                    item.locked = true;
-                    showThese.push(mirrored);
-                }
-            });
-            // Find the pair and show it based on the mirrored Meta
-            await OBR.scene.items.updateItems(
-                (item) => showThese.some((show) => show.id === item.id),
-                (items) =>
-                {
-                    for (let item of items)
+                    // Make visible
+                    const mirrorAttachments = mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind_attachments`] as string;
+                    if (mirrorAttachments)
                     {
-                        const mirrorMatch = showThese.find((show) => show.id === item.id);
-                        if (mirrorMatch)
+                        // Have to account for the parent moving
+                        const xAdjustment = item.position.x - mirrorImage.position.x;
+                        const yAdjustment = item.position.y - mirrorImage.position.y;
+
+                        const parsedAttach = JSON.parse(mirrorAttachments) as Item[];
+                        for (const attach of parsedAttach)
                         {
-                            if (mirrorMatch.name)
-                            {
-                                item.text.plainText = mirrorMatch.name;
-                            }
-                            item.image.height = mirrorMatch.height;
-                            item.image.width = mirrorMatch.width;
-                            item.position.x = mirrorMatch.x;
-                            item.position.y = mirrorMatch.y;
-                            item.disableHit = false;
-                            item.locked = false;
+                            attach.position.x += xAdjustment;
+                            attach.position.y += yAdjustment;
+                        }
+                        showThese = showThese.concat(parsedAttach);
+                    }
+                }
+                else
+                {
+                    for (let attachee of attachedItems)
+                    {
+
+                        const oldParent = context.items.find((item) => item.id === attachee.attachedTo);
+                        if (oldParent)
+                        {
+                            const copyAttach = { ...attachee };
+                            copyAttach.attachedTo = mirrorImage.id;
+                            updateThese.push(copyAttach as Image);
                         }
                     }
-                });
-            // Select the new guy(s)
-            const selectedId = showThese.map(item => item.id);
-            await OBR.player.select(selectedId);
+                }
 
-            //Find attachments
-            const attachedItems = await OBR.scene.items.getItems((item) => context.items.some(x => x.id === item.attachedTo));
-            if (attachedItems?.length > 0) 
+                mirrorImage.position.x = item.position.x;
+                mirrorImage.position.y = item.position.y;
+                item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
+                mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = JSON.stringify(item);
+                showThese.push(mirrorImage);
+                hideThese.push(cItem);
+            }
+
+            // This order matters, or else attachments won't have the new item to move to
+            await OBR.scene.items.addItems(showThese);
+
+            if (!attachmentCheckbox.checked)
             {
                 await OBR.scene.items.updateItems(attachedItems,
-                    (attachedments) =>
+                    (items) =>
                     {
-                        // Find the old item it was attached to, swap to Id in the mirror data
-                        for (let attachee of attachedments)
+                        for (let item of items)
                         {
-                            const oldParentMeta = context.items.find((item) => item.id === attachee.attachedTo)!.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as Metadata;
-                            const oldParentMirror = oldParentMeta.mirror as Mirror;
-                            attachee.attachedTo = oldParentMirror.id;
+                            const updatedItem = updateThese.find(x => x.id === item.id);
+                            if (updatedItem)
+                            {
+                                item.attachedTo = updatedItem.attachedTo;
+                            }
                         }
                     });
             }
+
+            await OBR.scene.items.deleteItems(hideThese.map(x => x.id));
+
+            // Select the new guy(s)
+            const selectedId = showThese.map(item => item.id);
+            await OBR.player.select(selectedId);
         }
     });
 
@@ -285,11 +300,11 @@ OBR.onReady(async () =>
                     // If it's one, this is an unbind
                     const item = context.items[0] as Image;
 
-                    // Get it's metadata to find the mirror and update it to be seen
-                    const metadata = item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as Metadata;
-                    const mirrored = metadata.mirror as Mirror;
-                    mirrored.x = item.position.x;
-                    mirrored.y = item.position.y;
+                    // Get the mirrored items data and clean it up
+                    const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as Image;
+                    mirrorImage.position.x = item.position.x + (item.image.width / 2);
+                    mirrorImage.position.y = item.position.y + (item.image.height / 4);
+                    mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
 
                     // Clear the bind metadata off so it's fresh
                     await OBR.scene.items.updateItems(
@@ -302,23 +317,8 @@ OBR.onReady(async () =>
                             }
                         });
 
-                    // Make the mirrored pair visible and slightly offset from the original, based on the original's potition
-                    // Also clear that metadata
-                    await OBR.scene.items.updateItems(
-                        (item) => item.id === mirrored.id,
-                        (items) =>
-                        {
-                            for (let itemed of items)
-                            {
-                                itemed.image.height = mirrored.height;
-                                itemed.image.width = mirrored.width;
-                                itemed.position.x = mirrored.x! + (item.image.width / 2);
-                                itemed.position.y = mirrored.y! + (item.image.height / 4);
-                                itemed.disableHit = false;
-                                itemed.locked = false;
-                                itemed.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
-                            }
-                        });
+                    // Re-Insert the old one
+                    await OBR.scene.items.addItems([mirrorImage]);
                 }
                 else
                 {
@@ -330,40 +330,21 @@ OBR.onReady(async () =>
                         return;
                     }
 
-                    /// Create copies of the items so we don't reference values
-                    const first = { ...context.items[0] } as Image;
-                    const second = { ...context.items[1] } as Image;
-                    // Take a mirror of the ID, height and width so we can zero out the mirrored
+                    const first = context.items[0] as Image;
+                    const second = context.items[1] as Image;
 
                     // If it's not a single, we're binding
-                    await OBR.scene.items.updateItems(context.items, (items) =>
+                    await OBR.scene.items.updateItems([context.items[0]], (items) =>
                     {
-                        for (let index = 0; index < items.length; index++)
+                        for (let i = 0; i < items.length; i++)
                         {
-                            const mirror: Mirror = index === 0 ?
-                                { id: second.id, height: second.image.height, width: second.image.width, name: second.text?.plainText }
-                                : { id: first.id, height: first.image.height, width: first.image.width, name: first.text?.plainText };
-
-                            items[index].metadata[`${Constants.EXTENSIONID}/metadata_bind`] = { mirror };
-
-                            // Update the mirror to be hidden
-                            if (index === 1)
-                            {
-                                if (items[1].text?.plainText)
-                                {
-                                    items[1].text.plainText = "";
-                                }
-                                items[1].image.height = 1;
-                                items[1].image.width = 1;
-                                items[1].position.x = 1;
-                                items[1].position.y = 1;
-                                items[1].disableHit = true;
-                                items[1].locked = true;
-                            }
+                            items[i].metadata[`${Constants.EXTENSIONID}/metadata_bind`] = JSON.stringify(second);
                         }
                     });
+
+                    await OBR.scene.items.deleteItems([second.id])
                     // Select the first of the array since we hid the other guy
-                    await OBR.player.select([context.items[0].id]);
+                    await OBR.player.select([first.id]);
                 }
             },
         });
@@ -383,6 +364,12 @@ OBR.onReady(async () =>
         {
             const target = event.target as HTMLInputElement;
             await OBR.room.setMetadata({ [`${Constants.EXTENSIONID}/disableBinding`]: target.checked });
+        }, false);
+
+        attachmentCheckbox.addEventListener("click", async (event: MouseEvent) =>
+        {
+            const target = event.target as HTMLInputElement;
+            await OBR.room.setMetadata({ [`${Constants.EXTENSIONID}/attachmentParent`]: target.checked });
         }, false);
 
         await OBR.scene.items.onChange(async (itemsChanged) =>
@@ -407,34 +394,6 @@ OBR.onReady(async () =>
                     }
                 }
             });
-
-            // Check that everyone has a buddy (see if the visible of the pair was deleted)
-            const tobeDeleted: string[] = [];
-            for (let item of itemsChanged)
-            {
-                // We're only dealing with Image data, so if it's not an image go away
-                if (item.type !== "IMAGE") continue;
-
-                const imItem = item as Image;
-                if (imItem.image.height === 1 && imItem.image.width === 1
-                    && imItem.metadata[`${Constants.EXTENSIONID}/metadata_bind`] !== undefined)
-                {
-                    const meta = imItem.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as any;
-                    const mirrorMeta = meta.mirror as Mirror;
-
-                    // If there is no bind metadata, it has no buddy - we can leave
-                    if (!mirrorMeta.id) continue;
-
-                    const mirrorPair = await OBR.scene.items.getItems([mirrorMeta.id]);
-                    if (mirrorPair.length == 0)
-                    {
-                        // If we can't find it's pair, it must've been deleted. Clean the invisible partner up
-                        tobeDeleted.push(imItem.id);
-                    }
-                }
-            }
-            // Delete all at once, not in a loop
-            await OBR.scene.items.deleteItems(tobeDeleted);
         });
 
         // Whenever things move around we want to update that Z index.
@@ -464,14 +423,3 @@ OBR.onReady(async () =>
         return items;
     }
 });
-
-// Interface for binding
-interface Mirror
-{
-    id: string;
-    height: number;
-    width: number;
-    x?: number,
-    y?: number,
-    name?: string;
-}
