@@ -210,7 +210,8 @@ html {
     vertical-align: text-bottom;
     height: 20px;
     width: 20px;
-    margin-right: 10px;
+    margin-right: 4px;
+    margin-left: 10px;
 }
 
 @keyframes battle-system-glow {
