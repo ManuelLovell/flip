@@ -66,7 +66,7 @@ OBR.onReady(async () =>
     if (role == "GM")
     {
         bindCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableBinding`] == true ? true : false;
-        zCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableZIndex`] == true ? true : false;
+        zCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableZIndex`] as boolean ?? true;
         attachmentCheckbox.checked = roomData[`${Constants.EXTENSIONID}/attachmentParent`] == true ? true : false;
         const sceneIsReady = await OBR.scene.isReady();
         if (sceneIsReady)
