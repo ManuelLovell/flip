@@ -13,18 +13,17 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `
 ///Scrolling News
 const textArray = [
-    "Fixed Bug with Names Showing",
-    "Flip! v1.2",
-    "New Attachment Permission",];
+    "New Attachment Permission",
+    "Flip! v1.21",
+    "Fixed Bug with Player Flip!!",];
 
 let currentIndex = 0;
-let bindingDisabled = false;
-const textContainer = document.getElementById("bannerText")!;
-const zCheckbox = document.getElementById("disableZOrder")! as HTMLInputElement;
-const bindCheckbox = document.getElementById("disableBinding")! as HTMLInputElement;
-const attachmentCheckbox = document.getElementById("keepAttachments")! as HTMLInputElement;
 
-const whatsNewContainer = document.getElementById("whatsNew")!;
+const textContainer = document.getElementById("bannerText") as HTMLDivElement;
+const zCheckbox = document.getElementById("disableZOrder") as HTMLInputElement;
+const bindCheckbox = document.getElementById("disableBinding") as HTMLInputElement;
+const attachmentCheckbox = document.getElementById("keepAttachments") as HTMLInputElement;
+const whatsNewContainer = document.getElementById("whatsNew") as HTMLDivElement;
 whatsNewContainer.appendChild(Utilities.GetWhatsNewButton());
 
 function fadeOut()
@@ -55,6 +54,10 @@ OBR.onReady(async () =>
     const theme = await OBR.theme.getTheme();
     const roomData = await OBR.room.getMetadata();
 
+    let zOrderDisabled = roomData[`${Constants.EXTENSIONID}/disableZIndex`] == true ? true : false;
+    let bindingDisabled = roomData[`${Constants.EXTENSIONID}/disableBinding`] == true ? true : false;
+    let keepAttachments = roomData[`${Constants.EXTENSIONID}/attachmentParent`] == true ? true : false;
+
     Utilities.SetThemeMode(theme, document);
     OBR.theme.onChange((theme) =>
     {
@@ -65,9 +68,10 @@ OBR.onReady(async () =>
     // Do all setup through the GM role so we don't have multiple updates
     if (role == "GM")
     {
-        bindCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableBinding`] == true ? true : false;
-        zCheckbox.checked = roomData[`${Constants.EXTENSIONID}/disableZIndex`] as boolean ?? true;
-        attachmentCheckbox.checked = roomData[`${Constants.EXTENSIONID}/attachmentParent`] == true ? true : false;
+        bindCheckbox.checked = bindingDisabled;
+        zCheckbox.checked = zOrderDisabled;
+        attachmentCheckbox.checked = keepAttachments;
+
         const sceneIsReady = await OBR.scene.isReady();
         if (sceneIsReady)
         {
@@ -92,9 +96,13 @@ OBR.onReady(async () =>
     {
         await OBR.action.setHeight(50);
         document.querySelector<HTMLDivElement>('#app')!.innerHTML = `Configuration is GM-Access only.`;
+
         OBR.room.onMetadataChange(async (metadata) =>
         {
-            bindingDisabled = metadata[`${Constants.EXTENSIONID}/disableBinding`] as boolean;
+            zOrderDisabled = metadata[`${Constants.EXTENSIONID}/disableZIndex`] == true ? true : false;
+            bindingDisabled = metadata[`${Constants.EXTENSIONID}/disableBinding`] == true ? true : false;
+            keepAttachments = metadata[`${Constants.EXTENSIONID}/attachmentParent`] == true ? true : false;
+
             if (bindingDisabled)
             {
                 await OBR.contextMenu.remove(Constants.CONTEXTBINDID);
@@ -173,7 +181,7 @@ OBR.onReady(async () =>
                 const item = cItem as Image;
                 const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as Item;
 
-                if (attachmentCheckbox.checked)
+                if (keepAttachments)
                 {
                     // Remove
                     const attachments = (await OBR.scene.items.getItemAttachments([cItem.id]))?.filter(x => x.id !== cItem.id);
@@ -225,7 +233,7 @@ OBR.onReady(async () =>
             // This order matters, or else attachments won't have the new item to move to
             await OBR.scene.items.addItems(showThese);
 
-            if (!attachmentCheckbox.checked)
+            if (!keepAttachments)
             {
                 await OBR.scene.items.updateItems(attachedItems,
                     (items) =>
@@ -354,29 +362,32 @@ OBR.onReady(async () =>
     // Do our scene setup which gives everyone a base anchor for Z-axis ordering
     async function SetupFlip(): Promise<void>
     {
-        zCheckbox.addEventListener("click", async (event: MouseEvent) =>
+        zCheckbox.onclick = async (e) =>
         {
-            const target = event.target as HTMLInputElement;
+            const target = e.target as HTMLInputElement;
+            zOrderDisabled = !zOrderDisabled;
             await OBR.room.setMetadata({ [`${Constants.EXTENSIONID}/disableZIndex`]: target.checked });
-        }, false);
+        };
 
-        bindCheckbox.addEventListener("click", async (event: MouseEvent) =>
+        bindCheckbox.onclick = async (e) =>
         {
-            const target = event.target as HTMLInputElement;
+            const target = e.target as HTMLInputElement;
+            bindingDisabled = !bindingDisabled;
             await OBR.room.setMetadata({ [`${Constants.EXTENSIONID}/disableBinding`]: target.checked });
-        }, false);
+        };
 
-        attachmentCheckbox.addEventListener("click", async (event: MouseEvent) =>
+        attachmentCheckbox.onclick = async (e) =>
         {
-            const target = event.target as HTMLInputElement;
+            const target = e.target as HTMLInputElement;
+            keepAttachments = !keepAttachments;
             await OBR.room.setMetadata({ [`${Constants.EXTENSIONID}/attachmentParent`]: target.checked });
-        }, false);
+        };
 
         await OBR.scene.items.onChange(async (itemsChanged) =>
         {
             await OBR.scene.items.updateItems(itemsChanged, (items) =>
             {
-                if (!zCheckbox.checked)
+                if (!zOrderDisabled)
                 {
                     for (let item of items)
                     {

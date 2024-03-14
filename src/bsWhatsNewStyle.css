@@ -51,7 +51,8 @@
 
 
 #newsContainer {
-    height: 400px;
+    height: 380px;
+    border-radius: 6px;
 }
 
 #bs-whatsnew {
@@ -67,13 +68,18 @@
     margin-bottom: 20px;
 }
 
+#footButtonContainer {
+    display: flex;
+    width: 85%;
+}
+
 footer {
     display: flex;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 45px;
+    height: 65px;
     width: calc(100% - 10px);
     padding: 0 4px 0 4px;
 
@@ -93,7 +99,7 @@ footer {
     font-weight: bolder;
     font-size: 31px;
     line-height: 0.95;
-    margin-top: -2px;
+    margin-top: 5px;
 }
 
 .close:after,
@@ -120,11 +126,16 @@ a:not(.patreon) {
     border-radius: 15px;
     padding: 5px;
     margin-left: 10px;
-    margin-bottom:5px;
+    margin-bottom: 15px;
 }
 
 a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     font-weight: bolder;
+    vertical-align: middle;
 }
 
 a:link {
@@ -149,33 +160,6 @@ a:active {
     color: yellow;
     background-color: transparent;
     text-decoration: underline;
-}
-
-.timer {
-    background: -webkit-linear-gradient(left, var(--OBR-Purple-Highlight) 50%, #eee 50%);
-    border-radius: 100%;
-    height: calc(var(--size) * 1px);
-    width: calc(var(--size) * 1px);
-    animation: time calc(var(--duration) * 1s) steps(1000, start) infinite;
-    -webkit-mask: radial-gradient(transparent 50%, #000 50%);
-    mask: radial-gradient(transparent 50%, #000 50%);
-    position: absolute;
-    float: right;
-    top: 0;
-    right: 0;
-    margin-right: 20px;
-    margin-top: -1.5px;
-}
-
-.mask {
-    border-radius: 100% 0 0 100% / 50% 0 0 50%;
-    height: 100%;
-    left: 0;
-    position: absolute;
-    top: 0;
-    width: 50%;
-    animation: mask calc(var(--duration) * 1s) steps(500, start) infinite;
-    transform-origin: 100% 50%;
 }
 
 @keyframes time {

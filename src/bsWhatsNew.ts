@@ -7,6 +7,9 @@ const footer = document.querySelector<HTMLElement>('#bs-whatsnew-notes')!;
 
 whatsnew.innerHTML = `
   <div id="newsContainer">
+    <h1>Flip! 3/13</h1>
+    Fixed a bug with player's being unable to properly flip items that have bound attachments.
+    </br>
     <h1>Flip! 1/9</h1>
     More cohesion.
     </br>
