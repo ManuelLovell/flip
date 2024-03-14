@@ -1,5 +1,8 @@
 import{O as e,C as a}from"./constants-6b42fd96.js";const n=document.querySelector("#bs-whatsnew"),o=document.querySelector("#bs-whatsnew-notes");n.innerHTML=`
   <div id="newsContainer">
+    <h1>Flip! 3/13</h1>
+    Fixed a bug with player's being unable to properly flip items that have bound attachments.
+    </br>
     <h1>Flip! 1/9</h1>
     More cohesion.
     </br>
