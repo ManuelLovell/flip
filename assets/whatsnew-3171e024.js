@@ -1,5 +1,9 @@
-import{O as e,C as a}from"./constants-6b42fd96.js";const n=document.querySelector("#bs-whatsnew"),o=document.querySelector("#bs-whatsnew-notes");n.innerHTML=`
+import{O as e,C as a}from"./constants-d6b9b9e8.js";const n=document.querySelector("#bs-whatsnew"),i=document.querySelector("#bs-whatsnew-notes");n.innerHTML=`
   <div id="newsContainer">
+    <h1>Flip! 3/17</h1>
+    Have people doing complicated things with Flip, so some fixing to account for it.
+    </br> When keeping attachments with the parent item, previously if you made a copy of that item (while the attachments were hidden), when it was Flipped and brought back to the scene it wouldn't behave correctly because it was essentially a saved state.  Now Flip will check for conflicts and re-assign Ids if needed from things being duplicated.
+    </br>
     <h1>Flip! 3/13</h1>
     Fixed a bug with player's being unable to properly flip items that have bound attachments.
     </br>
@@ -20,7 +24,7 @@ import{O as e,C as a}from"./constants-6b42fd96.js";const n=document.querySelecto
     </br>
     </br>
   </div>
-`;e.onReady(async()=>{o.innerHTML=`
+`;e.onReady(async()=>{i.innerHTML=`
     <a href="https://www.patreon.com/battlesystem" target="_blank">Patreon!</a>
     <a href="https://discord.gg/ANZKDmWzr6" target="_blank">Join the OBR Discord!</a>
     <div class="close"><img style="height:40px; width:40px;" src="/close-button.svg"</div>`;const t=document.querySelector(".close");t.onclick=async()=>{await e.modal.close(a.EXTENSIONWHATSNEW)}});
