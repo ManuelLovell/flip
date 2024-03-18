@@ -2,6 +2,7 @@ import OBR, { Image, Item } from '@owlbear-rodeo/sdk'
 import { Constants } from './constants';
 import * as Utilities from './utilities';
 import './style.css'
+import { MirrorItem } from './interfaces/flip';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
@@ -121,7 +122,7 @@ OBR.onReady(async () =>
         icons: [
             {
                 icon: "/flip.svg",
-                label: "Flip It",
+                label: "Reverse It",
                 filter: {
                     every: [
                         { key: "image", value: undefined, operator: "!=" },
@@ -147,7 +148,7 @@ OBR.onReady(async () =>
         icons: [
             {
                 icon: "/flop.svg",
-                label: "Flip It!!",
+                label: "Flip It!",
                 filter: {
                     every: [
                         // This is for Bound characters, it swaps to their other side
@@ -174,12 +175,18 @@ OBR.onReady(async () =>
             await OBR.player.deselect(context.items.map(item => item.id));
             const attached = await OBR.scene.items.getItemAttachments(context.items.map(x => x.id));
             const attachedItems = attached.filter(item => !context.items.find(x => x.id == item.id));
+            const existingItems = (await OBR.scene.items.getItems()).map(x => x.id);
 
             // Get the mirrored items data and clean it up
             for (let cItem of context.items)
             {
                 const item = cItem as Image;
-                const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as Item;
+                const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as MirrorItem;
+
+                // Check for ID conflicts from duplicates
+                const updateId = existingItems.includes(mirrorImage.id);
+                const newId = updateId ? Utilities.GetGUID() : undefined;
+                if (newId) mirrorImage.id = newId;
 
                 if (keepAttachments)
                 {
@@ -198,11 +205,16 @@ OBR.onReady(async () =>
                         const xAdjustment = item.position.x - mirrorImage.position.x;
                         const yAdjustment = item.position.y - mirrorImage.position.y;
 
-                        const parsedAttach = JSON.parse(mirrorAttachments) as Item[];
+                        const parsedAttach = JSON.parse(mirrorAttachments) as MirrorItem[];
                         for (const attach of parsedAttach)
                         {
                             attach.position.x += xAdjustment;
                             attach.position.y += yAdjustment;
+                            if (newId) 
+                            {
+                                attach.id = Utilities.GetGUID();
+                                attach.attachedTo = newId;
+                            }
                         }
                         showThese = showThese.concat(parsedAttach);
                     }
@@ -216,7 +228,8 @@ OBR.onReady(async () =>
                         if (oldParent)
                         {
                             const copyAttach = { ...attachee };
-                            copyAttach.attachedTo = mirrorImage.id;
+                            copyAttach.attachedTo = newId ? newId : mirrorImage.id;
+                            if (newId) copyAttach.id = Utilities.GetGUID();
                             updateThese.push(copyAttach as Image);
                         }
                     }

@@ -7,6 +7,10 @@ const footer = document.querySelector<HTMLElement>('#bs-whatsnew-notes')!;
 
 whatsnew.innerHTML = `
   <div id="newsContainer">
+    <h1>Flip! 3/17</h1>
+    Have people doing complicated things with Flip, so some fixing to account for it.
+    </br> When keeping attachments with the parent item, previously if you made a copy of that item (while the attachments were hidden), when it was Flipped and brought back to the scene it wouldn't behave correctly because it was essentially a saved state.  Now Flip will check for conflicts and re-assign Ids if needed from things being duplicated.
+    </br>
     <h1>Flip! 3/13</h1>
     Fixed a bug with player's being unable to properly flip items that have bound attachments.
     </br>
