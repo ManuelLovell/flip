@@ -117,7 +117,7 @@ export function GetWhatsNewButton()
         }
         await OBR.modal.open({
             id: Constants.EXTENSIONWHATSNEW,
-            url: `/bsWhatsNew.html`,
+            url: `/bswhatsnew.html`,
             height: 500,
             width: 350,
         });
