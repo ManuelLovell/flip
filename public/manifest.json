@@ -1,7 +1,7 @@
 {
     "name": "Flip!",
     "description": "Arranges token depth based on height. Also bind two tokens and allows for easy flipping.",
-    "version": "1.22",
+    "version": "2.0",
     "author": "Battle-System",
     "icon": "/logo.png",
     "manifest_version": 1,
@@ -9,7 +9,7 @@
       "title": "Flip!",
       "icon": "/icon.svg",
       "popover": "/",
-      "height": 200,
+      "height": 250,
       "width": 300
     }
   }

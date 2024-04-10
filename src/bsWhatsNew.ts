@@ -1,12 +1,17 @@
 import OBR from "@owlbear-rodeo/sdk";
-import '/src/bsWhatsNewStyle.css'
-import { Constants } from "./constants";
+import { Constants } from "./utilities/bsConstants";
+import '/src/styles/w-style.css'
 
 const whatsnew = document.querySelector<HTMLDivElement>('#bs-whatsnew')!;
 const footer = document.querySelector<HTMLElement>('#bs-whatsnew-notes')!;
 
 whatsnew.innerHTML = `
   <div id="newsContainer">
+    <h1>Flip! 4/10</h1>
+    So you'll need to reconfigure your settings - the Z-Indexing has been broken down by layer to allow for more minute control.
+    </br> Disabling player binding will now also disable their ability to 'Flip it' to the other side.  This is to avoid a player clicking an item and seeing the button, indicating it has another side.
+    </br> Also (obviously) cleaned up the settings a little, and added this .. standard little What's New.
+    </br> Enjoy.
     <h1>Flip! 3/17</h1>
     Have people doing complicated things with Flip, so some fixing to account for it.
     </br> When keeping attachments with the parent item, previously if you made a copy of that item (while the attachments were hidden), when it was Flipped and brought back to the scene it wouldn't behave correctly because it was essentially a saved state.  Now Flip will check for conflicts and re-assign Ids if needed from things being duplicated.
@@ -34,15 +39,40 @@ whatsnew.innerHTML = `
 `;
 
 OBR.onReady(async () =>
-{
-    footer.innerHTML = `
-    <a href="https://www.patreon.com/battlesystem" target="_blank">Patreon!</a>
-    <a href="https://discord.gg/ANZKDmWzr6" target="_blank">Join the OBR Discord!</a>
-    <div class="close"><img style="height:40px; width:40px;" src="/close-button.svg"</div>`;
-
-    const closebutton = document.querySelector<HTMLElement>('.close')!;
-    closebutton!.onclick = async () =>
     {
-        await OBR.modal.close(Constants.EXTENSIONWHATSNEW);
-    };
-});
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const subscriberId = urlParams.get('subscriber')!;
+        const subscriber = subscriberId === "true";
+    
+        footer.innerHTML = `
+        <div id="footButtonContainer">
+            <button id="discordButton" type="button" title="Join the Owlbear-Rodeo Discord"><embed class="svg discord" src="/w-discord.svg" /></button>
+            <button id="patreonButton" type="button" ${subscriber ? 'title="Thank you for subscribing!"': 'title="Check out the Battle-System Patreon"'}>
+            ${subscriber ? '<embed id="patreonLogo" class="svg thankyou" src="/thankyou.svg" />'
+                : '<embed id="patreonLogo" class="svg patreon" src="/w-patreon.png" />'}</button>
+        </div>
+        <button id="closeButton" type="button" title="Close this window"><embed class="svg close" src="/w-close.svg" /></button>
+        `;
+    
+        const closebutton = document.getElementById('closeButton');
+        closebutton!.onclick = async () =>
+        {
+            await OBR.modal.close(Constants.EXTENSIONWHATSNEW);
+        };
+    
+        const discordButton = document.getElementById('discordButton');
+        discordButton!.onclick = async (e) =>
+        {
+            e.preventDefault();
+            window.open("https://discord.gg/ANZKDmWzr6", "_blank");
+        };
+    
+        const patreonButton = document.getElementById('patreonButton');
+        patreonButton!.onclick = async (e) =>
+        {
+            e.preventDefault();
+            window.open("https://www.patreon.com/battlesystem", "_blank");
+        };
+    });
+    
