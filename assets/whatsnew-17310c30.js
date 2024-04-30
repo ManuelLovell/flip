@@ -1,5 +1,10 @@
-import{O as n,C as r}from"./flipMain-5fe5de58.js";const l=document.querySelector("#bs-whatsnew"),d=document.querySelector("#bs-whatsnew-notes");l.innerHTML=`
+import{O as n,C as r}from"./flipMain-fd0c658a.js";const l=document.querySelector("#bs-whatsnew"),d=document.querySelector("#bs-whatsnew-notes");l.innerHTML=`
   <div id="newsContainer">
+    <h1>Flip! 4/30</h1>
+    Minor bug fix with caching attachments (And the Attachments with Parent setting).
+    </br> It wasn't updating when you removed the attachment on a bound item.
+    </br> Also updated the selection post-flip so it doesn't include the attachment(s). So the context buttons should stay. Meaning you can flip-flip-flip without having to reselect.
+    </br> Thank you, Baido for the report.
     <h1>Flip! 4/10</h1>
     So you'll need to reconfigure your settings - the Z-Indexing has been broken down by layer to allow for more minute control.
     </br> Disabling player binding will now also disable their ability to 'Flip it' to the other side.  This is to avoid a player clicking an item and seeing the button, indicating it has another side.
@@ -29,11 +34,11 @@ import{O as n,C as r}from"./flipMain-5fe5de58.js";const l=document.querySelector
     </br>
     </br>
   </div>
-`;n.onReady(async()=>{const o=window.location.search,t=new URLSearchParams(o).get("subscriber")==="true";d.innerHTML=`
+`;n.onReady(async()=>{const o=window.location.search,e=new URLSearchParams(o).get("subscriber")==="true";d.innerHTML=`
         <div id="footButtonContainer">
             <button id="discordButton" type="button" title="Join the Owlbear-Rodeo Discord"><embed class="svg discord" src="/w-discord.svg" /></button>
-            <button id="patreonButton" type="button" ${t?'title="Thank you for subscribing!"':'title="Check out the Battle-System Patreon"'}>
-            ${t?'<embed id="patreonLogo" class="svg thankyou" src="/thankyou.svg" />':'<embed id="patreonLogo" class="svg patreon" src="/w-patreon.png" />'}</button>
+            <button id="patreonButton" type="button" ${e?'title="Thank you for subscribing!"':'title="Check out the Battle-System Patreon"'}>
+            ${e?'<embed id="patreonLogo" class="svg thankyou" src="/thankyou.svg" />':'<embed id="patreonLogo" class="svg patreon" src="/w-patreon.png" />'}</button>
         </div>
         <button id="closeButton" type="button" title="Close this window"><embed class="svg close" src="/w-close.svg" /></button>
-        `;const i=document.getElementById("closeButton");i.onclick=async()=>{await n.modal.close(r.EXTENSIONWHATSNEW)};const a=document.getElementById("discordButton");a.onclick=async e=>{e.preventDefault(),window.open("https://discord.gg/ANZKDmWzr6","_blank")};const s=document.getElementById("patreonButton");s.onclick=async e=>{e.preventDefault(),window.open("https://www.patreon.com/battlesystem","_blank")}});
+        `;const i=document.getElementById("closeButton");i.onclick=async()=>{await n.modal.close(r.EXTENSIONWHATSNEW)};const a=document.getElementById("discordButton");a.onclick=async t=>{t.preventDefault(),window.open("https://discord.gg/ANZKDmWzr6","_blank")};const s=document.getElementById("patreonButton");s.onclick=async t=>{t.preventDefault(),window.open("https://www.patreon.com/battlesystem","_blank")}});
