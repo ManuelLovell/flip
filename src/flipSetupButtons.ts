@@ -34,6 +34,7 @@ export async function SetupFlipButton(): Promise<void>
         {
             // Find bound floppies, grab the metadata of this one to find it's Mirror
             let showThese: Item[] = [];
+            let selectThese: string[] = [];
             let hideThese: Item[] = [];
             let updateThese: Image[] = [];
 
@@ -62,6 +63,10 @@ export async function SetupFlipButton(): Promise<void>
                     {
                         cItem.metadata[`${Constants.EXTENSIONID}/metadata_bind_attachments`] = JSON.stringify(attachments);
                         hideThese = hideThese.concat(attachments);
+                    }
+                    else
+                    {
+                        cItem.metadata[`${Constants.EXTENSIONID}/metadata_bind_attachments`] = undefined;
                     }
                     // Make visible
                     const mirrorAttachments = mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind_attachments`] as string;
@@ -106,6 +111,7 @@ export async function SetupFlipButton(): Promise<void>
                 item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
                 mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = JSON.stringify(item);
                 showThese.push(mirrorImage);
+                selectThese.push(mirrorImage.id);
                 hideThese.push(cItem);
             }
 
@@ -131,7 +137,7 @@ export async function SetupFlipButton(): Promise<void>
             await OBR.scene.items.deleteItems(hideThese.map(x => x.id));
 
             // Select the new guy(s)
-            const selectedId = showThese.map(item => item.id);
+            const selectedId = selectThese;
             await OBR.player.select(selectedId);
         }
     });

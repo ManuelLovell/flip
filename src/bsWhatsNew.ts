@@ -7,6 +7,11 @@ const footer = document.querySelector<HTMLElement>('#bs-whatsnew-notes')!;
 
 whatsnew.innerHTML = `
   <div id="newsContainer">
+    <h1>Flip! 4/30</h1>
+    Minor bug fix with caching attachments (And the Attachments with Parent setting).
+    </br> It wasn't updating when you removed the attachment on a bound item.
+    </br> Also updated the selection post-flip so it doesn't include the attachment(s). So the context buttons should stay. Meaning you can flip-flip-flip without having to reselect.
+    </br> Thank you, Baido for the report.
     <h1>Flip! 4/10</h1>
     So you'll need to reconfigure your settings - the Z-Indexing has been broken down by layer to allow for more minute control.
     </br> Disabling player binding will now also disable their ability to 'Flip it' to the other side.  This is to avoid a player clicking an item and seeing the button, indicating it has another side.

@@ -58,24 +58,40 @@ class Flip
 export const FLIP = new Flip();
 OBR.onReady(async () =>
 {
+    const sceneReady = await OBR.scene.isReady();
+
+    if (sceneReady === false)
+    {
+        const startup = OBR.scene.onReadyChange(async (ready) =>
+        {
+            if (ready)
+            {
+                startup(); // Kill startup Handler
+                await StartFlip();
+            }
+        });
+    }
+    else
+    {
+        await StartFlip();
+    }
+
+});
+
+async function StartFlip()
+{
     // Safety Check for WhatsNew Re-Initializing
     const mainapp = document.getElementById('app');
     if (!mainapp) return;
 
     await BSCACHE.InitializeCache();
 
-    setTimeout(async () =>
-    {
-        // Refreshing or Entering a room can cause an issue with Localhost and getting data
-        // Not sure if this issue persists when live
-        if (BSCACHE.sceneReady === false) await BSCACHE.InitializeCache();
-        BSCACHE.SetupHandlers();
+    BSCACHE.SetupHandlers();
 
-        await FLIP.Initialize();
+    await FLIP.Initialize();
 
-        // We can setup our contextmenu anytime
-        await SetupFlipButton();
-        await SetupReverseButton();
-        await SetupBindButton();
-    }, 1000);
-});
+    // We can setup our contextmenu anytime
+    await SetupFlipButton();
+    await SetupReverseButton();
+    await SetupBindButton();
+}
