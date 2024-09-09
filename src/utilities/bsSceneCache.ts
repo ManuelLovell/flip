@@ -144,7 +144,7 @@ class BSCache
             await this.SetupSettingDefaults();
         }
 
-        //await this.CheckRegistration();
+        await this.CheckRegistration();
     }
 
     public KillHandlers()

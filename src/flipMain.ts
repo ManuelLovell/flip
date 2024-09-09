@@ -41,12 +41,12 @@ class Flip
         }
         else
         {
-            this.appWindow.innerHTML = `<div id="playerView">Configuration is GM only.<div id="whatsNew"></div></div>`;
+            this.appWindow.innerHTML = `<div id="playerView">Configuration is GM only.<div id="patreonContainer"></div></div>`;
             await OBR.action.setHeight(50);
         }
 
-        const whatsNewContainer = document.getElementById("whatsNew") as HTMLDivElement;
-        whatsNewContainer.appendChild(Utilities.GetWhatsNewButton());
+        const patreonContainer = document.getElementById("patreonContainer") as HTMLDivElement;
+        patreonContainer.appendChild(Utilities.GetPatreonButton());
 
         // We can setup our contextmenu anytime
         await SetupFlipButton();
@@ -80,10 +80,6 @@ OBR.onReady(async () =>
 
 async function StartFlip()
 {
-    // Safety Check for WhatsNew Re-Initializing
-    const mainapp = document.getElementById('app');
-    if (!mainapp) return;
-
     await BSCACHE.InitializeCache();
 
     BSCACHE.SetupHandlers();

@@ -18,7 +18,6 @@ export class SettingConstants
 export class Constants
 {
     static EXTENSIONID = "com.battle-system.flip";
-    static EXTENSIONWHATSNEW = "com.battle-system.flip-whatsnew";
     static VERSION = "whatsnew-flip-201";
     static CONTEXTFLIPID = "com.battle-system.flip-menu/context-menu-flipit";
     static CONTEXTFLOPID = "com.battle-system.flip-menu/context-menu-flopit";
@@ -34,7 +33,7 @@ export class Constants
                     <th>Flip!</th>
                     <th></th>
                     <th></th>
-                    <th><div id="whatsNew"></div></th>
+                    <th><div id="patreonContainer"></div></th>
                 </tr>
             </thead>
             <tbody>

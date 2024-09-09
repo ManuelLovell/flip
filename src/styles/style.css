@@ -68,28 +68,35 @@ thead {
     font-size: large;
 }
 
-#playerView
-{
+#playerView {
     padding: 10px;
     text-align: center;
     display: flex;
     justify-content: center;
 }
+
 .imageIcon {
     width: 20px;
     height: 20px;
     margin-left: 6px;
 }
 
+#patreonContainer {
+    border: 1px solid var(--OBR-offset-fore);
+    border-radius: 6px;
+    text-align: center;
+    width: 20px;
+    height: 20px;
+    padding: 4px;
+    margin-left: 10px;
+}
+
 .clickable {
     filter: var(--invert);
     background-color: transparent !important;
     border-style: none !important;
-    vertical-align: text-bottom;
     height: 20px;
     width: 20px;
-    margin-right: 4px;
-    margin-left: 10px;
     cursor: pointer;
 }
 
