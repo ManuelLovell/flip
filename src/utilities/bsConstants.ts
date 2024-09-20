@@ -37,15 +37,15 @@ export class Constants
                 </tr>
             </thead>
             <tbody>
-                <tr title="Removes the button for players that allows binding tokens together.">
+                <tr id="tip_removebind">
                     <td colspan ="3">Disable Player Bind</td>
                     <td>${CreateSlider(SettingConstants.DISABLEBIND)}</td>
                 </tr>
-                <tr title="Makes it so attachments stay with the parent token when Flipping.">
+                <tr id="tip_attachparent">
                     <td colspan ="3">Attachments with Parent</td>
                     <td>${CreateSlider(SettingConstants.KEEPATTACH)}</td>
                 </tr>
-                <tr title="Controls which layers the auto Z-Indexing is active on.">
+                <tr id="tip_zindex">
                     <td class="title" colspan ="4">Z-Indexing Layers</td>
                 </tr>
                 <tr>

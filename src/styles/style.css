@@ -47,6 +47,7 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
+    cursor: default;
 }
 
 #app {
@@ -179,4 +180,27 @@ input:checked+.slider:before {
 
 .slider.round:before {
     border-radius: 50%;
+}
+
+.tippy-box[data-theme~='battlesystem'] {
+    font-style: italic;
+    background: var(--OBR-dark-blue);
+    color: var(--OBR-font);
+    border: 1px solid var(--OBR-Purple-Select);
+}
+
+.tippy-box[data-theme~='battlesystem'][data-placement^='top']>.tippy-arrow::before {
+    border-top-color: var(--OBR-dark-blue);
+}
+
+.tippy-box[data-theme~='battlesystem'][data-placement^='bottom']>.tippy-arrow::before {
+    border-bottom-color: var(--OBR-dark-blue);
+}
+
+.tippy-box[data-theme~='battlesystem'][data-placement^='left']>.tippy-arrow::before {
+    border-left-color: var(--OBR-dark-blue);
+}
+
+.tippy-box[data-theme~='battlesystem'][data-placement^='right']>.tippy-arrow::before {
+    border-right-color: var(--OBR-dark-blue);
 }

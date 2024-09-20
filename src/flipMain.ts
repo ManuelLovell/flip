@@ -5,6 +5,7 @@ import { BSCACHE } from './utilities/bsSceneCache';
 import { Constants, MetaSettings, SettingConstants } from './utilities/bsConstants';
 import { SetCheckbox } from './utilities/bsSettingUtils';
 import './styles/style.css'
+import { SetupTooltips } from './utilities/bsTooltips';
 
 class Flip
 {
@@ -38,6 +39,7 @@ class Flip
             SetCheckbox(SettingConstants.NOTELAYER, Utilities.Zeta(SettingConstants.NOTELAYER));
             SetCheckbox(SettingConstants.TEXTLAYER, Utilities.Zeta(SettingConstants.TEXTLAYER));
             //SetCheckbox(SettingConstants.GRIDLAYER, Utilities.Zeta(SettingConstants.GRIDLAYER));
+            this.CreateTooltips();
         }
         else
         {
@@ -52,6 +54,15 @@ class Flip
         await SetupFlipButton();
         await SetupReverseButton();
         await SetupBindButton();
+    }
+
+    private CreateTooltips()
+    {
+        const gmTooltips = new Map<string, string>();
+        gmTooltips.set(`tip_removebind`, "Removes the button for players that allows binding tokens together.");
+        gmTooltips.set(`tip_attachparent`, "Makes it so attachments stay with the parent token when Flipping between tokens.")
+        gmTooltips.set(`tip_zindex`, "Controls which layers the auto Z-Indexing is active on.");
+        gmTooltips.forEach((value, key) => { SetupTooltips(key, value); });
     }
 }
 
