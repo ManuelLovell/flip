@@ -1,6 +1,37 @@
-import { Item, Image, Theme } from "@owlbear-rodeo/sdk";
+import { Item, Image, Theme, TextStyle } from "@owlbear-rodeo/sdk";
 import { BSCACHE } from "./bsSceneCache";
 import { Constants, MetaSettings } from "./bsConstants";
+
+export function getTextWidth(text: string, style: TextStyle): number
+{
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx)
+    {
+        return 0;
+    }
+
+    const fontWeight = style.fontWeight ?? "normal";
+    const fontSize = style.fontSize ?? 16;
+    const fontFamily = style.fontFamily ?? "sans-serif";
+
+    ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+
+    ctx.textAlign = style.textAlign?.toLowerCase() as CanvasTextAlign ?? "left";
+
+    const textMetrics = ctx.measureText(text);
+
+    let width = textMetrics.width;
+
+    const strokeExtra = (style.strokeWidth ?? 0);
+
+    const padding = (style.padding ?? 0) * 2;
+
+    width += strokeExtra + padding;
+
+    return width;
+}
 
 export async function RequestData(requestUrl: string, requestPackage: any): Promise<BSData>
 {

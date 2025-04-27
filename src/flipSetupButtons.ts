@@ -1,4 +1,4 @@
-import OBR, { Image, Item } from "@owlbear-rodeo/sdk";
+import OBR, { BoundingBox, Image, Item } from "@owlbear-rodeo/sdk";
 import { Constants, MetaSettings } from "./utilities/bsConstants";
 import * as Utilities from './utilities/bsUtilities';
 import { MirrorItem } from "./interfaces/flip";
@@ -18,14 +18,11 @@ export async function SetupFlipButton(): Promise<void>
                 filter: {
                     every: [
                         // This is for Bound characters, it swaps to their other side
-                        { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, operator: "!=", coordinator: "&&" },
-                        { key: "image", value: undefined, operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "GRID", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "RULER", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "FOG", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "POINTER", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "CONTROL", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "POPOVER", operator: "!=", coordinator: "&&" },
+                        { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, operator: "!=" },
+                    ],
+                    some: [
+                        { key: "type", operator: "==", value: "IMAGE", coordinator: "||" },
+                        { key: "type", operator: "==", value: "TEXT" }
                     ],
                 },
             },
@@ -47,8 +44,7 @@ export async function SetupFlipButton(): Promise<void>
             // Get the mirrored items data and clean it up
             for (let cItem of context.items)
             {
-                const item = cItem as Image;
-                const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as MirrorItem;
+                const mirrorImage = JSON.parse(cItem.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as MirrorItem;
 
                 // Check for ID conflicts from duplicates
                 const updateId = existingItems.includes(mirrorImage.id);
@@ -73,8 +69,8 @@ export async function SetupFlipButton(): Promise<void>
                     if (mirrorAttachments)
                     {
                         // Have to account for the parent moving
-                        const xAdjustment = item.position.x - mirrorImage.position.x;
-                        const yAdjustment = item.position.y - mirrorImage.position.y;
+                        let xAdjustment = cItem.position.x - mirrorImage.position.x;
+                        let yAdjustment = cItem.position.y - mirrorImage.position.y;
 
                         const parsedAttach = JSON.parse(mirrorAttachments) as MirrorItem[];
                         for (const attach of parsedAttach)
@@ -106,10 +102,26 @@ export async function SetupFlipButton(): Promise<void>
                     }
                 }
 
-                mirrorImage.position.x = item.position.x;
-                mirrorImage.position.y = item.position.y;
-                item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
-                mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = JSON.stringify(item);
+                mirrorImage.position.x = cItem.position.x;
+                mirrorImage.position.y = cItem.position.y;
+
+                // If this an Image becoming Text..
+                if (cItem.type === "IMAGE" && mirrorImage.type === "TEXT")
+                {
+                    const textBounds = mirrorImage.metadata[`${Constants.EXTENSIONID}/text_bounds`] as BoundingBox;
+                    mirrorImage.position.x -= (textBounds.width / 2);
+                    mirrorImage.position.y -= (textBounds.height / 2);
+                }
+                else if (cItem.type === "TEXT" && mirrorImage.type === "IMAGE")
+                {
+                    const textBounds = await OBR.scene.items.getItemBounds([cItem.id]);
+                    mirrorImage.position.x += (textBounds.width / 2);
+                    mirrorImage.position.y += (textBounds.height / 2);
+                    cItem.metadata[`${Constants.EXTENSIONID}/text_bounds`] = textBounds;
+                }
+
+                cItem.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
+                mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = JSON.stringify(cItem);
                 showThese.push(mirrorImage);
                 selectThese.push(mirrorImage.id);
                 hideThese.push(cItem);
@@ -145,7 +157,7 @@ export async function SetupFlipButton(): Promise<void>
 
 export async function SetupReverseButton(): Promise<void>
 {
-    // SETUP FLIP BUTTON
+    // SETUP REVERSE BUTTON
     await OBR.contextMenu.create({
         id: Constants.CONTEXTFLIPID,
         icons: [
@@ -154,18 +166,41 @@ export async function SetupReverseButton(): Promise<void>
                 label: "Reverse It",
                 filter: {
                     every: [
-                        { key: "image", value: undefined, operator: "!=" },
+                        { key: "type", value: "IMAGE", operator: "==", coordinator: "||" },
+                        { key: "type", value: "TEXT", operator: "==" },
                     ],
                 }
             }
         ],
         async onClick(context, _: string)
         {
+            const measuredList = await Promise.all(
+                context.items.map(async x =>
+                {
+                    if (x.type === "TEXT")
+                    {
+                        const measured = await OBR.scene.items.getItemBounds([x.id]);
+                        return {
+                            id: x.id,
+                            width: measured.width
+                        };
+                    }
+                    return { id: undefined, width: undefined };
+                })
+            );
             await OBR.scene.items.updateItems(context.items, (items) =>
             {
                 for (let item of items)
                 {
                     item.scale.x = -(item.scale.x);
+                    if (item.type === "TEXT")
+                    {
+                        const textBoundsWidth = measuredList.find(x => x.id === item.id)?.width;
+                        if (textBoundsWidth)
+                        {
+                            item.position.x = item.scale.x < 0 ? item.position.x + textBoundsWidth : item.position.x - textBoundsWidth;
+                        }
+                    }
                 }
             });
         }
@@ -187,15 +222,11 @@ export async function SetupBindButton(): Promise<void>
                     min: 2,
                     max: 2,
                     every: [
-                        // Only work on a pair at a time, with no bind metadata
-                        { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, coordinator: "&&" },
-                        { key: "image", value: undefined, operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "GRID", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "RULER", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "FOG", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "POINTER", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "CONTROL", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "POPOVER", operator: "!=", coordinator: "&&" },
+                        { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, operator: "==" },
+                    ],
+                    some: [
+                        { key: "type", operator: "==", value: "IMAGE", coordinator: "||" },
+                        { key: "type", operator: "==", value: "TEXT" }
                     ],
                 },
             },
@@ -205,15 +236,12 @@ export async function SetupBindButton(): Promise<void>
                 filter: {
                     max: 1,
                     every: [
-                        // Only unbind a set at a time, who has bind metadata
-                        { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, operator: "!=", coordinator: "&&" },
-                        { key: "image", value: undefined, operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "GRID", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "RULER", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "FOG", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "POINTER", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "CONTROL", operator: "!=", coordinator: "&&" },
-                        { key: "layer", value: "POPOVER", operator: "!=", coordinator: "&&" },
+                        // This is for Bound characters, it swaps to their other side
+                        { key: ["metadata", `${Constants.EXTENSIONID}/metadata_bind`], value: undefined, operator: "!=" },
+                    ],
+                    some: [
+                        { key: "type", operator: "==", value: "IMAGE", coordinator: "||" },
+                        { key: "type", operator: "==", value: "TEXT" }
                     ],
                 },
             }
@@ -224,12 +252,20 @@ export async function SetupBindButton(): Promise<void>
             {
                 // If it's one, this is an unbind
                 const item = context.items[0] as Image;
-
-                // Get the mirrored items data and clean it up
-                const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string) as Image;
-                mirrorImage.position.x = item.position.x + (item.image.width / 2);
-                mirrorImage.position.y = item.position.y + (item.image.height / 4);
-                mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
+                const mirrorImage = JSON.parse(item.metadata[`${Constants.EXTENSIONID}/metadata_bind`] as string);
+                if (item.type === "IMAGE")
+                {
+                    // Get the mirrored items data and clean it up
+                    mirrorImage.position.x = item.position.x + (item.image.width / 2);
+                    mirrorImage.position.y = item.position.y + (item.image.height / 4);
+                    mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
+                }
+                else
+                {
+                    mirrorImage.position.x = item.position.x + 50;
+                    mirrorImage.position.y = item.position.y + 50;
+                    mirrorImage.metadata[`${Constants.EXTENSIONID}/metadata_bind`] = undefined;
+                }
 
                 // Clear the bind metadata off so it's fresh
                 await OBR.scene.items.updateItems(
@@ -242,21 +278,18 @@ export async function SetupBindButton(): Promise<void>
                         }
                     });
 
-                // Re-Insert the old one
+                // Re-Insert the old one to the scene
                 await OBR.scene.items.addItems([mirrorImage]);
             }
             else
             {
-                const sameType = context.items.every(x => x.layer === context.items[0].layer);
-
-                if (!sameType)
+                const first = context.items[0];
+                const second = context.items[1];
+                if (second.type === "TEXT")
                 {
-                    await OBR.notification.show("Bound items must be from the same Layer.", "WARNING");
-                    return;
+                    const boundingBox = await OBR.scene.items.getItemBounds([second.id]);
+                    second.metadata[`${Constants.EXTENSIONID}/text_bounds`] = boundingBox;
                 }
-
-                const first = context.items[0] as Image;
-                const second = context.items[1] as Image;
 
                 // If it's not a single, we're binding
                 await OBR.scene.items.updateItems([context.items[0]], (items) =>
